@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion - Audit Planner</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: #f0f2f5;
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .login-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .login-card h1 {
+            margin-bottom: 1.5rem;
+            color: #1a73e8;
+        }
+
+        .login-card p {
+            color: #5f6368;
+            margin-bottom: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #dadce0;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 0.75rem;
+            background: #1a73e8;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .btn-login:hover {
+            background: #1557b0;
+        }
+
+        .message {
+            margin-top: 1rem;
+            padding: 0.75rem;
+            border-radius: 4px;
+            display: none;
+        }
+
+        .message.success {
+            background: #e6f4ea;
+            color: #1e8e3e;
+        }
+
+        .message.error {
+            background: #fce8e6;
+            color: #d93025;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="login-card">
+        <h1>Audit Planner</h1>
+        <p>Connectez-vous avec votre email et votre mot de passe.</p>
+
+        <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" placeholder="votre@email.com" required>
+        </div>
+
+        <div class="form-group">
+            <label for="password">Mot de passe</label>
+            <input type="password" id="password" placeholder="••••••••" required>
+        </div>
+
+        <button id="btn-login" class="btn-login"
+            style="display:flex; align-items:center; justify-content:center; gap:8px;">
+            <i data-lucide="log-in" style="width:18px; height:18px;"></i>
+            Se connecter
+        </button>
+
+        <div id="msg" class="message"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="js/config.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            console.log("Page de login chargée.");
+            lucide.createIcons();
+
+            // Configuration Supabase récupérée depuis js/config.js (via window.PARAM_ENV)
+            var SUPABASE_URL = (window.PARAM_ENV && window.PARAM_ENV.SUPABASE_URL) || '';
+            var SUPABASE_KEY = (window.PARAM_ENV && window.PARAM_ENV.SUPABASE_KEY) || '';
+
+            var supabase;
+            var btnLogin = document.getElementById('btn-login');
+            var emailInput = document.getElementById('email');
+            var passwordInput = document.getElementById('password');
+            var msgEl = document.getElementById('msg');
+
+            function showMsg(text, type) {
+                msgEl.textContent = text;
+                msgEl.className = 'message ' + type;
+                msgEl.style.display = 'block';
+            }
+
+            try {
+                if (!window.supabase) {
+                    showMsg("Erreur : Le SDK Supabase n'est pas chargé. Vérifiez votre connexion internet.", "error");
+                    return;
+                }
+                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                console.log("Client Supabase créé.");
+            } catch (err) {
+                alert("Erreur d'initialisation : " + err.message);
+                return;
+            }
+
+            if (btnLogin) {
+                btnLogin.onclick = async function () {
+                    var email = emailInput.value.trim();
+                    var password = passwordInput.value;
+
+                    if (!email || !password) {
+                        showMsg('Veuillez remplir tous les champs.', 'error');
+                        return;
+                    }
+
+                    console.log("Tentative de connexion pour :", email);
+                    btnLogin.disabled = true;
+                    btnLogin.textContent = 'Connexion en cours...';
+
+                    try {
+                        const { data, error } = await supabase.auth.signInWithPassword({
+                            email: email,
+                            password: password
+                        });
+
+                        if (error) {
+                            showMsg('Erreur : ' + error.message, 'error');
+                            btnLogin.disabled = false;
+                            btnLogin.textContent = 'Se connecter';
+                        } else {
+                            console.log("Connexion réussie !");
+                            window.location.href = 'planification.html';
+                        }
+                    } catch (e) {
+                        showMsg('Erreur inattendue : ' + e.message, 'error');
+                        btnLogin.disabled = false;
+                        btnLogin.textContent = 'Se connecter';
+                    }
+                };
+            } else {
+                alert("Erreur : Bouton de connexion introuvable dans le document.");
+            }
+
+            // Vérifier session existante
+            try {
+                supabase.auth.getSession().then(function (res) {
+                    if (res.data && res.data.session) {
+                        window.location.href = 'planification.html';
+                    }
+                });
+            } catch (e) { }
+        });
+    </script>
+</body>
+
+</html>

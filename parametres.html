@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Paramètres — Audit Planner</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+
+  <div class="tabs-nav no-print">
+    <div class="nav-left">
+      <img src="Gemini_Generated_Image_u2ex61u2ex61u2ex.png" alt="Logo" class="nav-logo">
+      <h1 class="nav-title">Paramètres</h1>
+    </div>
+    <div class="nav-center">
+      <a href="planification.html" class="tab-btn">Planification</a>
+      <a href="parametres.html" class="tab-btn active">Paramètres</a>
+    </div>
+    <div class="nav-right">
+      <a href="planification.html" class="btn btn-secondary no-print">
+        <i data-lucide="arrow-left" style="width:16px; height:16px;"></i>
+        Retour
+      </a>
+      <button class="btn btn-danger" onclick="signOut()">
+        <i data-lucide="log-out" style="width:16px; height:16px;"></i>
+        Déconnexion
+      </button>
+    </div>
+  </div>
+
+  <div class="container">
+    <div id="msg-global" class="message"></div>
+
+    <div class="two-col">
+
+      <!-- PERSONNES -->
+      <div>
+        <div class="section">
+          <div class="section-header">
+            <h2>Utilisateurs</h2>
+            <div class="btn-group">
+            </div>
+          </div>
+          <div id="msg-persons" class="message"></div>
+          <div class="form-row">
+            <div class="form-field" style="flex:1;">
+              <label for="personFirst">Prénom</label>
+              <input type="text" id="personFirst" placeholder="Ex: Marie">
+            </div>
+            <div class="form-field" style="flex:1;">
+              <label for="personLast">Nom</label>
+              <input type="text" id="personLast" placeholder="Ex: Dupont">
+            </div>
+            <button class="btn btn-primary" id="btnAddPerson" style="align-self:flex-end;">
+              <i data-lucide="user-plus" style="width:16px; height:16px;"></i>
+              Ajouter
+            </button>
+          </div>
+          <div id="personsList">
+            <div class="list-empty" id="personsEmpty">Aucune personne. Ajoutez-en une ci-dessus.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AUDITS -->
+      <div>
+        <div class="section">
+          <div class="section-header">
+            <h2>Audits</h2>
+            <div class="btn-group">
+              <button class="btn btn-sm btn-primary" id="btnShowAuditForm">
+                <i data-lucide="plus" style="width:14px; height:14px;"></i>
+                Nouveau Audit
+              </button>
+            </div>
+          </div>
+          <div id="msg-audits" class="message"></div>
+
+          <div id="auditFormContainer"
+            style="display: none; background: #f9fafb; border: 1px solid #e5e7eb; padding: 16px; border-radius: 8px; margin-bottom: 20px;">
+            <div class="form-row">
+              <div class="form-field" style="flex:2;">
+                <label for="auditName">Nom de l'audit</label>
+                <input type="text" id="auditName" placeholder="Ex: Audit Qualité ISO">
+              </div>
+              <div class="form-field" style="flex:1;">
+                <label for="auditTheme">Thème</label>
+                <input type="text" id="auditTheme" placeholder="Ex: Qualité">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-field" style="flex:3;">
+                <label for="auditDesc">Description / Consignes</label>
+                <input type="text" id="auditDesc" placeholder="Ex: Vérifier les EPI et le port des gants">
+              </div>
+              <div class="form-field" style="flex:1;">
+                <label for="auditFreq">Fréquence</label>
+                <select id="auditFreq">
+                  <option value="ponctuel">Ponctuel</option>
+                  <option value="hebdo">Hebdomadaire</option>
+                  <option value="mensuel">Mensuel</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-field" style="flex:1;">
+                <label>
+                  <i data-lucide="user-check"
+                    style="width:14px; height:14px; display:inline-block; vertical-align:text-bottom;"></i>
+                  Auditeur responsable par défaut :
+                </label>
+                <div class="checkbox-group" id="auditDefaultAssigneeGroup">
+                  <!-- Dynamique -->
+                </div>
+              </div>
+            </div>
+            <div class="form-row" style="flex-wrap:wrap;">
+              <div class="form-field" style="width:100%;">
+                <label>Jours à exclure (Remplissage auto) :</label>
+                <div class="checkbox-group" id="auditExclusions">
+                  <label><input type="checkbox" value="1"> Lun</label>
+                  <label><input type="checkbox" value="2"> Mar</label>
+                  <label><input type="checkbox" value="3"> Mer</label>
+                  <label><input type="checkbox" value="4"> Jeu</label>
+                  <label><input type="checkbox" value="5"> Ven</label>
+                  <label><input type="checkbox" value="6" checked> Sam</label>
+                  <label><input type="checkbox" value="0" checked> Dim</label>
+                </div>
+              </div>
+              <div class="form-field" style="width:100%;">
+                <label>Personnes à exclure (Remplissage auto) :</label>
+                <div class="checkbox-group" id="auditPersonExclusions">
+                  <!-- Dynamique -->
+                </div>
+              </div>
+              <button class="btn btn-primary" id="btnAddAudit" style="margin-top:10px;width:100%;">
+                <i data-lucide="plus-circle" style="width:16px; height:16px;"></i>
+                Valider la création
+              </button>
+            </div>
+          </div>
+          <div id="auditsList">
+            <div class="list-empty" id="auditsEmpty">Aucun audit. Ajoutez-en un ci-dessus.</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Modal Édition Audit -->
+  <div id="editAuditModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Modifier l'Audit</h2>
+        <button class="close-modal">×</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="editAuditOldName">
+        <div class="form-row">
+          <div class="form-field" style="flex:2;">
+            <label for="editAuditName">Nom de l'audit</label>
+            <input type="text" id="editAuditName">
+          </div>
+          <div class="form-field" style="flex:1;">
+            <label for="editAuditTheme">Thème</label>
+            <input type="text" id="editAuditTheme">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-field" style="flex:3;">
+            <label for="editAuditDesc">Description / Consignes</label>
+            <input type="text" id="editAuditDesc">
+          </div>
+          <div class="form-field" style="flex:1;">
+            <label for="editAuditFreq">Fréquence</label>
+            <select id="editAuditFreq">
+              <option value="ponctuel">Ponctuel</option>
+              <option value="hebdo">Hebdomadaire</option>
+              <option value="mensuel">Mensuel</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-field">
+            <label>👤 Auditeur responsable par défaut :</label>
+            <div class="checkbox-group" id="editAuditDefaultAssigneeGroup">
+              <!-- Dynamique -->
+            </div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-field">
+            <label>Jours à exclure :</label>
+            <div class="checkbox-group" id="editAuditExclusions">
+              <label><input type="checkbox" value="1"> Lun</label>
+              <label><input type="checkbox" value="2"> Mar</label>
+              <label><input type="checkbox" value="3"> Mer</label>
+              <label><input type="checkbox" value="4"> Jeu</label>
+              <label><input type="checkbox" value="5"> Ven</label>
+              <label><input type="checkbox" value="6" checked> Sam</label>
+              <label><input type="checkbox" value="0" checked> Dim</label>
+            </div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-field">
+            <label>Personnes à exclure :</label>
+            <div class="checkbox-group" id="editAuditPersonExclusions">
+              <!-- Dynamique -->
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary close-modal">Annuler</button>
+        <button class="btn btn-primary" id="btnSaveAuditEdit">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Édition Personne -->
+  <div id="editPersonModal" class="modal">
+    <div class="modal-content" style="max-width:600px;">
+      <div class="modal-header">
+        <h2>Modifier la Personne</h2>
+        <button class="close-modal-person">×</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="editPersonOldName">
+        <div class="form-row">
+          <div class="form-field" style="flex:1;">
+            <label for="editPersonFirst">Prénom</label>
+            <input type="text" id="editPersonFirst">
+          </div>
+          <div class="form-field" style="flex:1;">
+            <label for="editPersonLast">Nom</label>
+            <input type="text" id="editPersonLast">
+          </div>
+        </div>
+        <div class="form-row" style="margin-top:10px;">
+          <div class="form-field">
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;">
+              <input type="checkbox" id="editPersonVisible" checked>
+              Afficher cet utilisateur dans le planning
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary close-modal-person">Annuler</button>
+        <button class="btn btn-primary" id="btnSavePersonEdit">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Calendrier Absences -->
+  <div id="absencesModal" class="modal">
+    <div class="modal-content" style="max-width:760px;width:95%;">
+      <div class="modal-header">
+        <h2 id="absModalTitle">Absences</h2>
+        <button class="close-modal-abs">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="abs-calendar-controls">
+          <div class="btn-group">
+            <button class="btn btn-sm btn-secondary" id="absPrevMonth">‹</button>
+            <button class="btn btn-sm btn-secondary" id="absNextMonth">›</button>
+          </div>
+          <h3 id="absCurrentMonthLabel" style="margin:0;font-size:15px;"></h3>
+          <span style="font-size:11px;color:var(--text-muted);">Cliquez ou glissez pour sélectionner</span>
+        </div>
+        <div id="absCalendarGrid" class="abs-calendar-grid"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary close-modal-abs">Fermer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Alerte Personnalisée -->
+  <div id="alertModal" class="modal">
+    <div class="modal-content" style="max-width:400px; text-align:center;">
+      <div class="modal-header" style="justify-content:center; border-bottom:none; margin-bottom:10px;">
+        <div id="alertModalIcon" style="margin-bottom:10px; color:var(--accent);">
+          <i data-lucide="alert-triangle" style="width:48px; height:48px;"></i>
+        </div>
+      </div>
+      <h2 id="alertModalTitle" style="margin-bottom:15px; color:var(--text); font-size:18px;">Attention</h2>
+      <div class="modal-body" style="margin-bottom:20px; color:var(--text-muted); font-size:14px; line-height:1.5;">
+        <p id="alertModalMessage">Message d'alerte ici.</p>
+      </div>
+      <div class="modal-footer" style="justify-content:center; border-top:none; margin-top:0;">
+        <button class="btn btn-primary" id="btnConfirmAlert" style="width:100%;">Compris</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="js/config.js"></script>
+  <script src="js/scripts.js"></script>
+  <script src="js/parametres.js"></script>
+  <script>
+    (async () => {
+      try {
+        console.log("Initialisation Paramètres globale...");
+        await checkAuth();
+        await initParametres();
+        console.log("Paramètres prêts.");
+      } catch (e) {
+        console.error("Erreur (Paramètres) :", e);
+        alert("Erreur de chargement des paramètres : " + e.message);
+      }
+    })();
+  </script>
+</body>
+
+</html>

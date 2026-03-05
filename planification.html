@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Audit Planner — Planification</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    body {
+      padding-top: 0;
+    }
+
+    .person-block {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      margin-bottom: 8px;
+      overflow: hidden;
+    }
+
+    .person-block-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      background: var(--section);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .person-block-header:hover {
+      background: #e8e8e8;
+    }
+
+    .person-block-body {
+      padding: 12px 14px;
+      display: none;
+    }
+
+    .person-block.open .person-block-body {
+      display: block;
+    }
+
+    .sidebar-acc {
+      margin-bottom: 6px;
+    }
+
+    .sidebar-acc-header {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      padding: 6px 4px 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      user-select: none;
+    }
+
+    .sidebar-acc-body {
+      display: block;
+    }
+
+    .sidebar-acc.closed .sidebar-acc-body {
+      display: none;
+    }
+
+    .cal-area {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="tabs-nav no-print">
+    <div class="nav-left">
+      <img src="Gemini_Generated_Image_u2ex61u2ex61u2ex.png" alt="Logo" class="nav-logo">
+      <h1 class="nav-title">Planification</h1>
+    </div>
+    <div class="nav-center">
+      <a href="planification.html" class="tab-btn active">Planification</a>
+      <a href="parametres.html" class="tab-btn">Paramètres</a>
+    </div>
+    <div class="nav-right">
+      <div class="btn-group no-print">
+        <button class="btn btn-secondary" id="btnPrint">
+          <i data-lucide="printer" style="width:14px; height:14px;"></i>
+          Imprimer
+        </button>
+        <button class="btn btn-danger" onclick="signOut()">
+          <i data-lucide="log-out" style="width:14px; height:14px;"></i>
+          Déconnexion
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div id="msg-planning" class="message"></div>
+
+
+
+    <div class="layout-wrapper">
+      <aside class="audit-sidebar no-print" id="auditSidebar">
+        <div class="sidebar-header">
+          <h2 style="display:flex; align-items:center; gap:8px;">
+            <i data-lucide="clipboard-list" style="width:18px; height:18px; color:var(--accent);"></i>
+            Audits
+          </h2>
+          <button class="sidebar-toggle-btn" id="btnToggleSidebar" title="Réduire/Agrandir">
+            <i data-lucide="chevron-left" class="icon" style="width:16px; height:16px;"></i>
+          </button>
+        </div>
+        <div class="sidebar-content-wrapper">
+          <p class="sidebar-desc">Glissez un audit sur une cellule du calendrier.</p>
+          <div id="msg-sidebar" class="message"></div>
+          <div id="auditSidebarContent">
+            <div class="loading">Chargement...</div>
+          </div>
+        </div>
+      </aside>
+
+      <main class="main-content">
+        <h1 class="print-only-title">Planning Audit</h1>
+        <div id="printDate" class="only-print print-date-sub"></div>
+        <div class="auto-fill-toolbar no-print">
+          <div class="toolbar-left">
+            <div class="form-field">
+              <label>Remplissage automatique :</label>
+              <select id="autoFillPeriod">
+                <option value="week">Semaine affichée</option>
+                <option value="month">Mois affiché</option>
+              </select>
+            </div>
+            <button class="btn btn-primary" id="btnAutoFill">
+              <i data-lucide="zap" style="width:16px; height:16px;"></i>
+              Lancer le remplissage
+            </button>
+            <button class="btn btn-danger" id="btnClearPeriod">
+              <i data-lucide="trash-2" style="width:16px; height:16px;"></i>
+              Vider la période
+            </button>
+          </div>
+          <div class="toolbar-right">
+            <div class="stat">
+              <span>Afficher :</span>
+              <select id="filterStatus">
+                <option value="all">Tous</option>
+                <option value="pending">En attente</option>
+                <option value="done">Validés</option>
+              </select>
+            </div>
+            <div class="stat">
+              <span>Progression :</span>
+              <span class="stat-val" id="statDone">0</span> / <span id="statTotal">0</span>
+            </div>
+            <div class="stat" id="statPending" style="font-size:12px;"></div>
+          </div>
+        </div>
+
+        <div class="cal-area">
+          <div class="cal-controls no-print">
+            <div class="btn-group">
+              <button class="btn btn-sm btn-secondary" id="btnPrev">
+                <i data-lucide="chevron-left" style="width:16px; height:16px;"></i>
+              </button>
+              <div class="cal-title" id="calTitle">—</div>
+              <button class="btn btn-sm btn-secondary" id="btnNext">
+                <i data-lucide="chevron-right" style="width:16px; height:16px;"></i>
+              </button>
+            </div>
+            <select id="viewSelect">
+              <option value="week">Vue Semaine</option>
+              <option value="month">Vue Mois</option>
+            </select>
+            <button class="btn btn-sm btn-outline" id="btnToday">Aujourd'hui</button>
+            <label class="toggle-weekend no-print">
+              <input type="checkbox" id="chkShowWeekend"> Week-ends
+            </label>
+          </div>
+          <div class="cal-wrapper">
+            <div id="calGrid">
+              <div class="loading">Chargement...</div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- MODAL VUE PAR PERSONNE -->
+  <div id="personSummaryModal" class="modal">
+    <div class="modal-content" style="max-width:680px;">
+      <div class="modal-header">
+        <div class="person-summary-header">
+          <div class="person-summary-avatar" id="psum-avatar">?</div>
+          <div>
+            <div class="person-summary-name" id="psum-name">Personne</div>
+            <div class="person-summary-sub" id="psum-period">Période</div>
+          </div>
+        </div>
+        <button id="closePsumModal"
+          style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-muted);">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="person-summary-stats">
+          <div class="psum-stat"><span class="psum-stat-val" id="psum-done">0</span><span class="psum-stat-label">✓
+              Validés</span></div>
+          <div class="psum-stat"><span class="psum-stat-val" id="psum-pending">0</span><span class="psum-stat-label">◌
+              En attente</span></div>
+          <div class="psum-stat"><span class="psum-stat-val" id="psum-abs">0</span><span class="psum-stat-label">🚫
+              Absences</span></div>
+        </div>
+        <ul class="person-summary-list" id="psum-list"></ul>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="closePsumModalBtn">Fermer</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="js/config.js"></script>
+  <script src="js/scripts.js"></script>
+  <script src="js/planning.js"></script>
+  <script>
+    (async () => {
+      try {
+        console.log("Initialisation Planning globale...");
+        await checkAuth();
+        await initPlanning();
+        await renderCalendar();
+        await updateStats();
+        await updateWeekendVisibility();
+        initDragAndDrop();
+        console.log("Planning prêt.");
+      } catch (e) {
+        console.error("Erreur :", e);
+        alert("Erreur de chargement : " + e.message);
+      }
+    })();
+    document.getElementById('closePsumModal').onclick = function () { document.getElementById('personSummaryModal').classList.remove('open'); };
+    document.getElementById('closePsumModalBtn').onclick = function () { document.getElementById('personSummaryModal').classList.remove('open'); };
+  </script>
+</body>
+
+</html>
