@@ -1,5 +1,6 @@
 var currentView = 'week';
 var currentDate = new Date();
+var selectedAudit = null;
 
 async function initPlanning() {
   persons = await loadData('persons', {});
@@ -175,6 +176,7 @@ function renderSidebar() {
   if (window.lucide) lucide.createIcons();
   initDragAndDrop();
   initSidebarReordering();
+  initClickSelection(); // Nouvelle fonction pour mobile
 
   var searchInput = document.getElementById('sidebarSearchInput');
   if (searchInput) {
@@ -208,16 +210,26 @@ function renderCalendar() {
   }
 }
 
+function getInitials(name) {
+  var words = name.trim().split(/[\s-]+/);
+  if (words.length === 0) return '?';
+  if (words.length === 1) return words[0].charAt(0).toUpperCase();
+  return (words[0].charAt(0) + words[1].charAt(0)).toUpperCase();
+}
+
 function buildPersonHeader(pName, dates, isMonth) {
   var load = dates.reduce(function (acc, d) {
     return acc + (planning[d] && planning[d][pName] ? planning[d][pName].length : 0);
   }, 0);
   var overThreshold = isMonth ? 10 : 5;
   var loadBadge = load > 0 ? '<span class="person-load-badge' + (load > overThreshold ? ' overload' : '') + '">' + load + '</span>' : '<span></span>';
+  var initials = getInitials(pName);
+
   return '<td class="person-name-cell sticky-col" draggable="true" data-person="' + escH(pName) + '" data-type="person-row">' +
     '<div class="person-info">' +
     '<div class="person-info-left">' +
     '<div class="reorder-handle no-print">⠿</div>' +
+    '<div class="avatar" style="background:var(--accent);">' + initials + '</div>' +
     '<span class="p-name">' + escH(pName).replace(' ', '<br>') + '</span>' +
     '</div>' +
     '<div class="person-info-right">' +
@@ -268,7 +280,7 @@ function renderWeek() {
         return;
       }
       var cls = 'drop-zone' + (d === todayStr ? ' today-cell' : '') + (isWknd ? ' weekend-col' : '');
-      html += '<td class="' + cls.trim() + '" data-date="' + d + '" data-person="' + escH(pName) + '">' + renderAssignments(d, pName) + '</td>';
+      html += '<td class="' + cls.trim() + '" data-date="' + d + '" data-person="' + escH(pName) + '" onclick="handleCellClick(event, this)">' + renderAssignments(d, pName) + '</td>';
     });
     html += '</tr>';
   });
@@ -335,7 +347,7 @@ function renderMonth() {
       }
 
       var cls = 'drop-zone' + (dStr === todayStr ? ' today-cell' : '') + (isWknd ? ' weekend-col' : '') + extraCls;
-      html += '<td class="' + cls.trim() + '" data-date="' + dStr + '" data-person="' + escH(pName) + '">' + renderAssignments(dStr, pName) + '</td>';
+      html += '<td class="' + cls.trim() + '" data-date="' + dStr + '" data-person="' + escH(pName) + '" onclick="handleCellClick(event, this)">' + renderAssignments(dStr, pName) + '</td>';
     });
     html += '</tr>';
   });
@@ -453,28 +465,47 @@ async function handleDrop(detail) {
 function runAutoFill() {
   if (!Object.keys(persons).length) { showMessage('msg-planning', 'Aucune personne. Allez dans Paramètres.', 'error'); return; }
   if (!Object.keys(audits).length) { showMessage('msg-planning', 'Aucun audit. Allez dans Paramètres.', 'error'); return; }
-  var btn = document.getElementById('btnAutoFill');
-  btn.disabled = true;
-  btn.textContent = '⏳ En cours...';
-  setTimeout(async function () {
-    var period = document.getElementById('autoFillPeriod').value;
-    var dates = period === 'week' ? getWeekDates(getWeekMonday(new Date(currentDate))) : getMonthDates(currentDate.getFullYear(), currentDate.getMonth());
-    var result = autoFill(persons, audits, planning, dates);
-    btn.disabled = false;
-    btn.textContent = '▶ Lancer le remplissage';
-    if (!result.success) { showMessage('msg-planning', result.msg, 'error'); return; }
-    planning = result.planning; await saveData('planning', planning);
-    renderCalendar(); updateStats();
-    showMessage('msg-planning', result.msg, result.type || 'success');
-  }, 50);
+
+  showConfirm(
+    'Remplissage Automatique',
+    'Générer le planning automatiquement pour cette période ?<br>Les audits existants seront conservés.',
+    'Lancer',
+    'btn-primary',
+    'zap',
+    function () {
+      var btn = document.getElementById('btnAutoFill');
+      btn.disabled = true;
+      btn.textContent = '⏳ En cours...';
+      setTimeout(async function () {
+        var period = document.getElementById('autoFillPeriod').value;
+        var dates = period === 'week' ? getWeekDates(getWeekMonday(new Date(currentDate))) : getMonthDates(currentDate.getFullYear(), currentDate.getMonth());
+        var result = autoFill(persons, audits, planning, dates);
+        btn.disabled = false;
+        btn.innerHTML = '<i data-lucide="zap" style="width:16px; height:16px;"></i> Lancer le remplissage';
+        if (window.lucide) lucide.createIcons();
+        if (!result.success) { showMessage('msg-planning', result.msg, 'error'); return; }
+        planning = result.planning; await saveData('planning', planning);
+        renderCalendar(); updateStats();
+        showMessage('msg-planning', result.msg, result.type || 'success');
+      }, 50);
+    }
+  );
 }
 
 async function clearPeriod() {
   var dates = getCurrentDates();
-  if (!confirm('Effacer toutes les assignations de cette période ?')) return;
-  dates.forEach(function (d) { delete planning[d]; });
-  await saveData('planning', planning); renderCalendar(); updateStats();
-  showMessage('msg-planning', 'Période effacée.', 'info');
+  showConfirm(
+    'Vider la période',
+    'Êtes-vous sûr de vouloir <strong>effacer toutes les assignations</strong> de cette période ?<br>Cette action est irréversible.',
+    'Effacer tout',
+    'btn-danger',
+    'trash-2',
+    async function () {
+      dates.forEach(function (d) { delete planning[d]; });
+      await saveData('planning', planning); renderCalendar(); updateStats();
+      showMessage('msg-planning', 'Période effacée.', 'info');
+    }
+  );
 }
 
 function applyFilter() {
@@ -625,4 +656,122 @@ function initPersonReordering() {
       renderCalendar();
     });
   });
+}
+
+// --- MENU CONTEXTUEL JOUR (mobile-first) ---
+
+var _dayMenuDate = null;
+var _dayMenuPerson = null;
+
+function initClickSelection() {
+  // Compat. ancienne API (inutilisée, le menu contextuel gère tout via handleCellClick)
+}
+
+function handleCellClick(e, td) {
+  // Ignorer si le clic vient d'un audit existant (évite d'ouvrir le menu en cliquant sur les boutons Actions d'un audit)
+  if (e && e.target && e.target.closest('.assignment-chip')) return;
+
+  var date = td.getAttribute('data-date');
+  var person = td.getAttribute('data-person');
+  if (!date || !person) return;
+  openDayMenu(date, person, td);
+}
+
+function openDayMenu(date, person, anchorTd) {
+  _dayMenuDate = date;
+  _dayMenuPerson = person;
+
+  var modal = document.getElementById('dayMenuModal');
+  var titleEl = document.getElementById('dayMenuTitle');
+  var listEl = document.getElementById('dayMenuAuditList');
+
+  var dObj = parseDate(date);
+  var dayLabel = DAY_NAMES_SHORT[dObj.getDay()] + ' ' + dObj.getDate() + ' ' + MONTH_NAMES[dObj.getMonth()].slice(0, 3);
+  titleEl.textContent = dayLabel + ' — ' + person;
+
+  var names = getSortedKeys(audits, 'auditsOrder');
+  if (names.length === 0) {
+    listEl.innerHTML = '<p class="day-menu-empty">Aucun audit disponible.<br><a href="parametres.html">Configurer les audits</a></p>';
+  } else {
+    var byTheme = {};
+    names.forEach(function (n) {
+      var t = audits[n].theme || 'Sans thème';
+      if (!byTheme[t]) byTheme[t] = [];
+      byTheme[t].push(n);
+    });
+    var html = '';
+    Object.keys(byTheme).forEach(function (theme) {
+      html += '<div class="day-menu-theme-label">' + escH(theme) + '</div>';
+      byTheme[theme].forEach(function (n) {
+        var a = audits[n];
+        var tSlug = slugify(a.theme || '');
+        var freq = a.frequency || 'ponctuel';
+        var freqColors = { hebdo: '#DBEAFE', mensuel: '#E0E7FF', ponctuel: '#F3F4F6' };
+        var freqLabel = { hebdo: '🔁 Hebdo', mensuel: '📅 Mensuel', ponctuel: '• Ponctuel' };
+        var alreadyAssigned = planning[date] && planning[date][person] && planning[date][person].some(function (x) { return x.audit === n; });
+        html += '<button class="day-menu-audit-btn theme-' + tSlug + (alreadyAssigned ? ' day-menu-already' : '') + '" data-audit="' + escH(n) + '" aria-label="Ajouter ' + escH(n) + '">' +
+          '<span class="day-menu-audit-name">' + escH(n) + '</span>' +
+          '<span class="day-menu-audit-freq" style="background:' + (freqColors[freq] || '#F3F4F6') + '">' + (freqLabel[freq] || freq) + '</span>' +
+          (alreadyAssigned ? '<span class="day-menu-already-badge">✓ Déjà assigné</span>' : '') +
+          '</button>';
+      });
+    });
+    listEl.innerHTML = html;
+
+    listEl.querySelectorAll('.day-menu-audit-btn:not(.day-menu-already)').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var auditName = this.getAttribute('data-audit');
+        var d = _dayMenuDate, p = _dayMenuPerson;
+        closeDayMenu();
+        handleDrop({ auditName: auditName, date: d, person: p, source: 'cell-click', sourceKey: null });
+      });
+    });
+  }
+
+  modal.classList.add('open');
+  if (window.lucide) lucide.createIcons();
+}
+
+function closeDayMenu() {
+  var modal = document.getElementById('dayMenuModal');
+  if (modal) modal.classList.remove('open');
+  _dayMenuDate = null;
+  _dayMenuPerson = null;
+}
+
+// --- MODAL DE CONFIRMATION GÉNÉRIQUE ---
+function showConfirm(title, message, okText, okColorClass, iconName, onConfirm) {
+  var modal = document.getElementById('confirmModal');
+  if (!modal) return;
+
+  document.getElementById('confirmModalTitle').textContent = title;
+  document.getElementById('confirmModalText').innerHTML = message;
+
+  var iconEl = document.getElementById('confirmModalIcon');
+  iconEl.innerHTML = '<i data-lucide="' + (iconName || 'help-circle') + '" style="width: 48px; height: 48px; margin: 0 auto;"></i>';
+  iconEl.style.color = (okColorClass === 'btn-danger') ? 'var(--danger, #DC2626)' : 'var(--accent, #3B82F6)';
+
+  var okBtn = document.getElementById('confirmModalOk');
+  okBtn.textContent = okText || 'Confirmer';
+  okBtn.className = 'btn ' + (okColorClass || 'btn-primary');
+
+  var newOkBtn = okBtn.cloneNode(true);
+  okBtn.parentNode.replaceChild(newOkBtn, okBtn);
+
+  newOkBtn.onclick = function () {
+    modal.classList.remove('open');
+    if (onConfirm) onConfirm();
+  };
+
+  document.getElementById('confirmModalCancel').onclick = function () {
+    modal.classList.remove('open');
+  };
+
+  // Fermeture fond
+  modal.onclick = function (e) {
+    if (e.target === modal) modal.classList.remove('open');
+  };
+
+  modal.classList.add('open');
+  if (window.lucide) lucide.createIcons();
 }

@@ -43,6 +43,28 @@ function escH(s) {
 }
 function safeId(s) { return String(s).replace(/[^a-zA-Z0-9]/g, '_'); }
 
+// Gestion Menu Mobile Global
+document.addEventListener('DOMContentLoaded', () => {
+  const btnBurger = document.getElementById('btnBurger');
+  const mobileMenu = document.getElementById('mobileMenu');
+  if (btnBurger && mobileMenu) {
+    btnBurger.onclick = () => {
+      mobileMenu.classList.toggle('open');
+      const icon = btnBurger.querySelector('i');
+      if (icon) {
+        if (mobileMenu.classList.contains('open')) {
+          icon.setAttribute('data-lucide', 'x');
+        } else {
+          icon.setAttribute('data-lucide', 'menu');
+        }
+        if (typeof lucide !== 'undefined') {
+          lucide.createIcons();
+        }
+      }
+    };
+  }
+});
+
 var persons = {}, audits = {}, planning = {};
 var personsOrder = [], auditsOrder = [];
 
