@@ -19,6 +19,9 @@
       <a href="planification.html" class="tab-btn">Planification</a>
       <a href="parametres.html" class="tab-btn active">Paramètres</a>
     </div>
+    <button class="burger-btn no-print" id="btnBurger" aria-label="Menu">
+      <i data-lucide="menu"></i>
+    </button>
     <div class="nav-right">
       <a href="planification.html" class="btn btn-secondary no-print">
         <i data-lucide="arrow-left" style="width:16px; height:16px;"></i>
@@ -31,6 +34,16 @@
     </div>
   </div>
 
+  <!-- MENU MOBILE OVERLAY -->
+  <div class="mobile-menu no-print" id="mobileMenu">
+    <a href="planification.html" class="tab-btn">Planification</a>
+    <a href="parametres.html" class="tab-btn active">Paramètres</a>
+    <hr style="border: none; border-top: 1px solid var(--border); margin: 8px 0;">
+    <button class="btn btn-danger" onclick="signOut()" style="width:100%;">
+      <i data-lucide="log-out" style="width:16px; height:16px;"></i>
+      Déconnexion
+    </button>
+  </div>
   <div class="container">
     <div id="msg-global" class="message"></div>
 
